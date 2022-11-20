@@ -1,11 +1,12 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
+import numpy as np
 #Excel viewer extension in vscode is recommended to view the csv files.
 
 results_path = os.path.join(os.getcwd(), "results")
 
-def analyze_beer_data(brand:str, filtered_column:str, x_label:str, show:bool = False) -> tuple:
+def analyze_beer_data(brand:str, filtered_column:str, x_label:str, seg:int,  show:bool = False) -> tuple:
     """Plots a histogram and a boxplot of the filtered_column of the brand beer data.
     Also, calculates the statistics of the filtered_column of the brand beer data and 
     detecs the outliers of the filtered_column of the brand beer data.
@@ -23,7 +24,7 @@ def analyze_beer_data(brand:str, filtered_column:str, x_label:str, show:bool = F
     plot_beer_df_hist(beer_df=beer_df, x_label=x_label, show=show)
     beer_df_stats = calculate_beer_df_stats(beer_df=beer_df, file_name=f"{brand}_stats")
     plot_beer_df_boxplot(beer_df=beer_df, x_label=x_label, show=show)
-    beer_df_df_outliers = get_beer_df_outliers(beer_df=beer_df, file_name=f"{brand}_outliers")
+    beer_df_df_outliers = get_beer_df_outliers(beer_df=beer_df, filtered_column=filtered_column, file_name=f"{brand}_outliers")
 
     return beer_df_stats, beer_df_df_outliers
 
@@ -54,14 +55,15 @@ def plot_beer_df_hist(beer_df:pd.DataFrame, x_label:str, show:bool = False) -> N
         x_label (str): x label (and title) of the histogram.
         show (bool, optional): Determines if the histogram will be shown. Defaults to False.
     """
-    plt.hist(beer_df, color='blue', edgecolor='white')
+    plt.hist(beer_df, color='green', edgecolor='black', cumulative=False, range=(0,8), bins=20, density=True)
     plt.xlabel(x_label)
     plt.ylabel("Quantidade")
     plt.xlim(left=0)
     plt.ylim(bottom=0)
+    plt.grid(True, axis='y')
     fig_path = os.path.join(results_path, f"{x_label}.png")
     plt.savefig(fig_path)
-    
+
     if show:
         plt.show() 
         
@@ -120,20 +122,22 @@ def plot_beer_df_boxplot(beer_df:pd.DataFrame, x_label:str, show:bool = False) -
     """
     plt.boxplot(beer_df)
     plt.xlabel(x_label)
+    plt.grid(True, axis='y')
     fig_path = os.path.join(results_path, f"boxplot_{x_label}.png")
     plt.savefig(fig_path)
-    
+
     if show:
         plt.show()
-        
+
     plt.close()
 
 
-def get_beer_df_outliers(beer_df:pd.DataFrame, file_name:str) -> pd.DataFrame:
+def get_beer_df_outliers(beer_df:pd.DataFrame, filtered_column:str, file_name:str) -> pd.DataFrame:
     """Detects the outliers of the beer_df. And saves the outliers in a csv file.
 
     Args:
         beer_df (pd.DataFrame): dataframe of the prices of the selected product of the brand.
+        filtered_column (str): product column of the beer data to be analyzed.
         file_name (str): name of the file that will contain the outliers.
 
     Returns:
@@ -145,10 +149,10 @@ def get_beer_df_outliers(beer_df:pd.DataFrame, file_name:str) -> pd.DataFrame:
     lower_bound = q1 - (1.5 * iqr)
     upper_bound = q3 + (1.5 * iqr)
 
-    beer_df = beer_df[['C16 - LATA – 350 ml']]
+    beer_df = beer_df[[filtered_column]]
     beer_df_outliers = beer_df[(beer_df < lower_bound) | (beer_df > upper_bound)]
     beer_df_outliers = beer_df_outliers.dropna()
-    
+
     beer_outliers_path = os.path.join(results_path, f"{file_name}.csv")
     beer_df_outliers.to_csv(beer_outliers_path, index=False)
 
@@ -190,28 +194,28 @@ def compare_beers_outliers(beers_outliers:list, brands:list) -> None:
     beers_outliers[1] = beers_outliers[1].transpose()
     beers_outliers[0].insert(0, "Cerveja", brands[0])
     beers_outliers[1].insert(0, "Cerveja", brands[1])
-    
+
     df_beer_outliers_comparison = pd.concat([beers_outliers[0], beers_outliers[1]], ignore_index=True)
     beer_outliers_comparison_path = os.path.join(results_path, "beer_outliers_comparison.csv")
     df_beer_outliers_comparison.to_csv(beer_outliers_comparison_path, index=False)
 
 
-#First beer analysis
+#First beer
 brand_1 = "AMSTEL LAGER"
 product_1 = "C16 - LATA – 350 ml"
 x_label_1 = "AMSTEL LAGER: LATA – 350 ml"
-beer_1_df_stats, beer_1_df_outliers = analyze_beer_data(brand=brand_1, filtered_column=product_1, x_label=x_label_1, show=False)
 
 
-#Second beer analysis
+#Second beer
 brand_2 = "BECKS"
 product_2 = "C16 - LATA – 350 ml"
 x_label_2 = "BECKS: LATA – 350 ml"
-beer_2_df_stats, beer_2_df_outliers = analyze_beer_data(brand=brand_2, filtered_column=product_2, x_label=x_label_2, show=False)
 
 
 if __name__ == "__main__":
     #Comparing the beers
+    beer_1_df_stats, beer_1_df_outliers = analyze_beer_data(brand=brand_1, filtered_column=product_1, x_label=x_label_1, show=False)
+    beer_2_df_stats, beer_2_df_outliers = analyze_beer_data(brand=brand_2, filtered_column=product_2, x_label=x_label_2, show=False)
     compare_beers_data(beers_stats=[beer_1_df_stats, beer_2_df_stats], 
                        beers_outliers=[beer_1_df_outliers, beer_2_df_outliers], 
                        brands=[brand_1, brand_2])
