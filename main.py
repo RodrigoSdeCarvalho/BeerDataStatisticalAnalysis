@@ -6,7 +6,7 @@ import numpy as np
 
 results_path = os.path.join(os.getcwd(), "results")
 
-def analyze_beer_data(brand:str, filtered_column:str, x_label:str, seg:int,  show:bool = False) -> tuple:
+def analyze_beer_data(brand:str, filtered_column:str, x_label:str, show:bool = False) -> tuple:
     """Plots a histogram and a boxplot of the filtered_column of the brand beer data.
     Also, calculates the statistics of the filtered_column of the brand beer data and 
     detecs the outliers of the filtered_column of the brand beer data.
