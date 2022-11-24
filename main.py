@@ -2,11 +2,12 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 import numpy as np
+
 #Excel viewer extension in vscode is recommended to view the csv files.
 
 results_path = os.path.join(os.getcwd(), "results")
 
-def analyze_beer_data(brand:str, filtered_column:str, x_label:str, seg:int,  show:bool = False) -> tuple:
+def analyze_beer_data(brand:str, filtered_column:str, x_label:str,  show:bool = False) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Plots a histogram and a boxplot of the filtered_column of the brand beer data.
     Also, calculates the statistics of the filtered_column of the brand beer data and 
     detecs the outliers of the filtered_column of the brand beer data.
@@ -18,15 +19,14 @@ def analyze_beer_data(brand:str, filtered_column:str, x_label:str, seg:int,  sho
         show (bool, optional): Determines if the histogram and boxplot will be shown. Defaults to False.
 
     Returns:
-        tuple: dataframes of the statistics and outliers of the filtered_column of the brand beer data.
+        tuple: dataframe of the beer prices, dataframes of the statistics and outliers of the filtered_column of the brand beer data.
     """
     beer_df = get_beer_df(brand=brand, filtered_column=filtered_column, excel_file_name="table.xlsx")
     plot_beer_df_hist(beer_df=beer_df, x_label=x_label, show=show)
     beer_df_stats = calculate_beer_df_stats(beer_df=beer_df, file_name=f"{brand}_stats")
-    plot_beer_df_boxplot(beer_df=beer_df, x_label=x_label, show=show)
     beer_df_df_outliers = get_beer_df_outliers(beer_df=beer_df, filtered_column=filtered_column, file_name=f"{brand}_outliers")
 
-    return beer_df_stats, beer_df_df_outliers
+    return beer_df, beer_df_stats, beer_df_df_outliers
 
 
 def get_beer_df(brand:str, filtered_column:str, excel_file_name:str) -> pd.DataFrame:
@@ -112,7 +112,7 @@ def calculate_beer_df_stats(beer_df:pd.DataFrame, file_name:str) -> pd.DataFrame
     return beer_df_stats
 
 
-def plot_beer_df_boxplot(beer_df:pd.DataFrame, x_label:str, show:bool = False) -> None:
+def plot_beer_df_boxplot(beer_dfs:list[pd.DataFrame], x_labels:list[str], show:bool = False) -> None:
     """Plots a boxplot of the beer_df. And saves the boxplot in a file.
 
     Args:
@@ -120,7 +120,11 @@ def plot_beer_df_boxplot(beer_df:pd.DataFrame, x_label:str, show:bool = False) -
         x_label (str): x label (and title) of the boxplot.
         show (bool, optional): Determines if the boxplot will be shown. Defaults to False.
     """
-    plt.boxplot(beer_df)
+    for i in range(len(beer_dfs)):
+        beer_dfs[i] = beer_dfs[i].to_numpy().flatten()
+
+    x_label = f"{x_labels[0]} x {x_labels[1]}"
+    plt.boxplot(beer_dfs, labels=x_labels)
     plt.xlabel(x_label)
     plt.grid(True, axis='y')
     fig_path = os.path.join(results_path, f"boxplot_{x_label}.png")
@@ -159,7 +163,7 @@ def get_beer_df_outliers(beer_df:pd.DataFrame, filtered_column:str, file_name:st
     return beer_df_outliers
 
 
-def compare_beers_data(beers_stats:list, beers_outliers:list, brands:list) -> None:
+def compare_beers_data(beer_dfs:list[pd.DataFrame], x_labels:list[str], beers_stats:list, beers_outliers:list, brands:list, show:bool = False) -> None:
     """Compares the statistics and outliers of the beers. And saves the comparisons in csvs files.
 
     Args:
@@ -169,6 +173,7 @@ def compare_beers_data(beers_stats:list, beers_outliers:list, brands:list) -> No
     """
     compare_beers_stats(beers_stats=beers_stats, brands=brands)
     compare_beers_outliers(beers_outliers=beers_outliers, brands=brands)
+    plot_beer_df_boxplot(beer_dfs=beer_dfs, x_labels=x_labels, show=show)
 
 
 def compare_beers_stats(beers_stats:list, brands) -> None:
@@ -214,8 +219,8 @@ x_label_2 = "BECKS: LATA – 350 ml"
 
 if __name__ == "__main__":
     #Comparing the beers
-    beer_1_df_stats, beer_1_df_outliers = analyze_beer_data(brand=brand_1, filtered_column=product_1, x_label=x_label_1, show=False)
-    beer_2_df_stats, beer_2_df_outliers = analyze_beer_data(brand=brand_2, filtered_column=product_2, x_label=x_label_2, show=False)
-    compare_beers_data(beers_stats=[beer_1_df_stats, beer_2_df_stats], 
+    beer_1_df, beer_1_df_stats, beer_1_df_outliers = analyze_beer_data(brand=brand_1, filtered_column=product_1, x_label=x_label_1, show=False)
+    beer_2_df, beer_2_df_stats, beer_2_df_outliers = analyze_beer_data(brand=brand_2, filtered_column=product_2, x_label=x_label_2, show=False)
+    compare_beers_data(beer_dfs = [beer_1_df, beer_2_df], x_labels = [x_label_1, x_label_2], beers_stats=[beer_1_df_stats, beer_2_df_stats], 
                        beers_outliers=[beer_1_df_outliers, beer_2_df_outliers], 
                        brands=[brand_1, brand_2])
