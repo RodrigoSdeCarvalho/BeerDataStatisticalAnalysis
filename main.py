@@ -58,7 +58,9 @@ def plot_beer_df_hist(beer_df:pd.DataFrame, x_label:str, show:bool = False) -> N
         show (bool, optional): Determines if the histogram will be shown. Defaults to False.
     """
     n, bins, patches = plt.hist(beer_df, color='green', edgecolor='black', cumulative=False, range=(0,8))
-    plt.xticks(bins)
+    bins = list(bins)
+    mean_points = calculate_mean_points_for_hist(bins)
+    plt.xticks(mean_points)
     plt.xlabel(x_label)
     plt.ylabel("Quantidade")
     plt.xlim(left=0)
@@ -69,8 +71,17 @@ def plot_beer_df_hist(beer_df:pd.DataFrame, x_label:str, show:bool = False) -> N
 
     if show:
         plt.show() 
-        
+
     plt.close()
+
+
+def calculate_mean_points_for_hist(bins:list[float]) -> list[float]:
+    mean_points = []
+    for point in range(len(bins)-1):
+        mean_points.append((bins[point] + bins[point+1]) / 2)
+    mean_points = np.array(mean_points)
+
+    return mean_points
 
 
 def calculate_beer_df_stats(beer_df:pd.DataFrame, file_name:str) -> pd.DataFrame:
@@ -222,8 +233,8 @@ x_label_2 = "BECKS: LATA – 350 ml"
 
 if __name__ == "__main__":
     #Comparing the beers
-    beer_1_df, beer_1_df_stats, beer_1_df_outliers = analyze_beer_data(brand=brand_1, filtered_column=product_1, x_label=x_label_1, show=True)
-    beer_2_df, beer_2_df_stats, beer_2_df_outliers = analyze_beer_data(brand=brand_2, filtered_column=product_2, x_label=x_label_2, show=True)
+    beer_1_df, beer_1_df_stats, beer_1_df_outliers = analyze_beer_data(brand=brand_1, filtered_column=product_1, x_label=x_label_1, show=False)
+    beer_2_df, beer_2_df_stats, beer_2_df_outliers = analyze_beer_data(brand=brand_2, filtered_column=product_2, x_label=x_label_2, show=False)
 
     compare_beers_data(beer_dfs = [beer_1_df, beer_2_df], x_labels = [x_label_1, x_label_2], beers_stats=[beer_1_df_stats, beer_2_df_stats], 
                        beers_outliers=[beer_1_df_outliers, beer_2_df_outliers], 
