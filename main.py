@@ -1,7 +1,9 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
+import math
 import numpy as np
+from scipy import stats
 
 #Excel viewer extension in vscode is recommended to view the csv files.
 
@@ -55,7 +57,8 @@ def plot_beer_df_hist(beer_df:pd.DataFrame, x_label:str, show:bool = False) -> N
         x_label (str): x label (and title) of the histogram.
         show (bool, optional): Determines if the histogram will be shown. Defaults to False.
     """
-    plt.hist(beer_df, color='green', edgecolor='black', cumulative=False, range=(0,8), bins=20, density=True)
+    n, bins, patches = plt.hist(beer_df, color='green', edgecolor='black', cumulative=False, range=(0,8))
+    plt.xticks(bins)
     plt.xlabel(x_label)
     plt.ylabel("Quantidade")
     plt.xlim(left=0)
@@ -122,10 +125,10 @@ def plot_beer_df_boxplot(beer_dfs:list[pd.DataFrame], x_labels:list[str], show:b
     """
     for i in range(len(beer_dfs)):
         beer_dfs[i] = beer_dfs[i].to_numpy().flatten()
-
     x_label = f"{x_labels[0]} x {x_labels[1]}"
     plt.boxplot(beer_dfs, labels=x_labels)
     plt.xlabel(x_label)
+    plt.ylabel("Preço em reais") 
     plt.grid(True, axis='y')
     fig_path = os.path.join(results_path, f"boxplot_{x_label}.png")
     plt.savefig(fig_path)
@@ -219,8 +222,9 @@ x_label_2 = "BECKS: LATA – 350 ml"
 
 if __name__ == "__main__":
     #Comparing the beers
-    beer_1_df, beer_1_df_stats, beer_1_df_outliers = analyze_beer_data(brand=brand_1, filtered_column=product_1, x_label=x_label_1, show=False)
-    beer_2_df, beer_2_df_stats, beer_2_df_outliers = analyze_beer_data(brand=brand_2, filtered_column=product_2, x_label=x_label_2, show=False)
+    beer_1_df, beer_1_df_stats, beer_1_df_outliers = analyze_beer_data(brand=brand_1, filtered_column=product_1, x_label=x_label_1, show=True)
+    beer_2_df, beer_2_df_stats, beer_2_df_outliers = analyze_beer_data(brand=brand_2, filtered_column=product_2, x_label=x_label_2, show=True)
+
     compare_beers_data(beer_dfs = [beer_1_df, beer_2_df], x_labels = [x_label_1, x_label_2], beers_stats=[beer_1_df_stats, beer_2_df_stats], 
                        beers_outliers=[beer_1_df_outliers, beer_2_df_outliers], 
                        brands=[brand_1, brand_2])
